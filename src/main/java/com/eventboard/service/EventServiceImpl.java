@@ -1,4 +1,4 @@
-package com.EventBoard.service;
+package com.eventboard.service;
 
 public class EventServiceImpl {
 }

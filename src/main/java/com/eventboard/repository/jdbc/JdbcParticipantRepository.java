@@ -1,4 +1,4 @@
-package com.EventBoard.repository.jdbc;
+package com.eventboard.repository.jdbc;
 
 public class JdbcParticipantRepository {
 }

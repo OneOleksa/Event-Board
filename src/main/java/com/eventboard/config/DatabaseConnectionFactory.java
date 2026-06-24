@@ -1,4 +1,4 @@
-package com.EventBoard.config;
+package com.eventboard.config;
 
 public class DatabaseConnectionFactory {
 }
