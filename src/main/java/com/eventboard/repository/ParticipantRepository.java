@@ -1,4 +1,6 @@
 package com.eventboard.repository;
 
-public class ParticipantRepository {
+
+public interface ParticipantRepository {
+    int countByEventId(Long eventId);
 }

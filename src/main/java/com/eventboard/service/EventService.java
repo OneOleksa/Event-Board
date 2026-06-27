@@ -1,4 +1,9 @@
 package com.eventboard.service;
 
-public class EventService {
+import com.eventboard.dto.EventListItemDto;
+
+import java.util.List;
+
+public interface EventService {
+    List<EventListItemDto> getUpcomingEvents();
 }

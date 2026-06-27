@@ -1,4 +1,8 @@
 package com.eventboard.repository;
+import com.eventboard.model.Event;
 
-public class EventRepository {
+import java.util.List;
+
+public interface EventRepository {
+    List<Event> findUpcomingEvents();
 }
