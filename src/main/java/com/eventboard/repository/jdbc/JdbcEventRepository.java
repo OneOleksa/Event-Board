@@ -11,6 +11,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 
 
 public class JdbcEventRepository implements EventRepository {
@@ -26,20 +27,21 @@ public class JdbcEventRepository implements EventRepository {
         VALUES (?, ?, ?)
         """;
 
+    private static final String FIND_BY_ID_SQL = """
+        SELECT id, title, event_date, max_seats
+        FROM events
+        WHERE id = ?
+        """;
+
     @Override
     public List<Event> findUpcomingEvents() {
 
         List<Event> events = new ArrayList<>();
         try (Connection connection = DatabaseConnectionFactory.getConnection();
-        PreparedStatement preparedStatement = connection.prepareStatement(FIND_UPCOMING_EVENTS_SQL);
-        ResultSet resultSet = preparedStatement.executeQuery()) {
+             PreparedStatement preparedStatement = connection.prepareStatement(FIND_UPCOMING_EVENTS_SQL);
+             ResultSet resultSet = preparedStatement.executeQuery()) {
             while (resultSet.next()) {
-                Event event = new Event();
-                event.setId(resultSet.getLong("id"));
-                event.setTitle(resultSet.getString("title"));
-                event.setEventDate(resultSet.getDate("event_date").toLocalDate());
-                event.setMaxSeats(resultSet.getInt("max_seats"));
-                events.add(event);
+                events.add(mapRowToEvent(resultSet));
             }
         } catch (SQLException e){
             throw new RuntimeException("Cannot find upcoming events", e);
@@ -60,5 +62,36 @@ public class JdbcEventRepository implements EventRepository {
         } catch (SQLException e) {
             throw new RuntimeException("Cannot save event", e);
         }
+    }
+
+    @Override
+    public Optional<Event> findById(Long id) {
+        Objects.requireNonNull(id, "Event id cannot be null");
+
+        try (Connection connection = DatabaseConnectionFactory.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(FIND_BY_ID_SQL)) {
+
+            preparedStatement.setLong(1, id);
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return Optional.of(mapRowToEvent(resultSet));
+                }
+            }
+        } catch (SQLException e) {
+            throw new RuntimeException("Cannot find event by id", e);
+        }
+
+        return Optional.empty();
+    }
+    private Event mapRowToEvent(ResultSet resultSet) throws SQLException {
+        Event event = new Event();
+
+        event.setId(resultSet.getLong("id"));
+        event.setTitle(resultSet.getString("title"));
+        event.setEventDate(resultSet.getDate("event_date").toLocalDate());
+        event.setMaxSeats(resultSet.getInt("max_seats"));
+
+        return event;
     }
 }
