@@ -5,4 +5,5 @@ import java.util.List;
 
 public interface EventRepository {
     List<Event> findUpcomingEvents();
+    void save(Event event);
 }

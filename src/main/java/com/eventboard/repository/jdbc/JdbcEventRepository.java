@@ -10,6 +10,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 public class JdbcEventRepository implements EventRepository {
@@ -19,9 +20,16 @@ public class JdbcEventRepository implements EventRepository {
         WHERE event_date >= CURRENT_DATE
         ORDER BY event_date
         """;
+
+    private static final String SAVE_EVENT_SQL = """
+        INSERT INTO events (title, event_date, max_seats)
+        VALUES (?, ?, ?)
+        """;
+
     @Override
     public List<Event> findUpcomingEvents() {
-       List<Event> events = new ArrayList<>();
+
+        List<Event> events = new ArrayList<>();
         try (Connection connection = DatabaseConnectionFactory.getConnection();
         PreparedStatement preparedStatement = connection.prepareStatement(FIND_UPCOMING_EVENTS_SQL);
         ResultSet resultSet = preparedStatement.executeQuery()) {
@@ -37,5 +45,20 @@ public class JdbcEventRepository implements EventRepository {
             throw new RuntimeException("Cannot find upcoming events", e);
         }
        return events;
+    }
+
+    @Override
+    public void save(Event event) {
+        Objects.requireNonNull(event, "Event cannot be null");
+
+        try (Connection connection = DatabaseConnectionFactory.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_EVENT_SQL)) {
+            preparedStatement.setString(1, event.getTitle());
+            preparedStatement.setDate(2, java.sql.Date.valueOf(event.getEventDate()));
+            preparedStatement.setInt(3, event.getMaxSeats());
+            preparedStatement.executeUpdate();
+        } catch (SQLException e) {
+            throw new RuntimeException("Cannot save event", e);
+        }
     }
 }

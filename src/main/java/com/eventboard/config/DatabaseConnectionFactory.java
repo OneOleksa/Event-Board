@@ -15,6 +15,12 @@ public class DatabaseConnectionFactory {
 
     static {
 
+        try {
+            Class.forName("org.postgresql.Driver");
+        } catch (ClassNotFoundException e) {
+            throw new RuntimeException("PostgreSQL JDBC driver not found", e);
+        }
+
         Properties properties = new Properties();
         try (InputStream inputStream = DatabaseConnectionFactory.class.getClassLoader()
                 .getResourceAsStream("application.properties")) {
@@ -26,7 +32,7 @@ public class DatabaseConnectionFactory {
             DB_USERNAME = getRequiredProperty(properties, "db.username");
             DB_PASSWORD = getRequiredProperty(properties, "db.password");
         } catch (IOException e) {
-            throw new RuntimeException("Cannot load database properties: " + e.getMessage());
+            throw new RuntimeException("Cannot load database properties: " + e.getMessage(), e);
         }
     }
     private DatabaseConnectionFactory() {
