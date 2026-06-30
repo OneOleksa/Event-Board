@@ -1,13 +1,9 @@
 package com.eventboard.controller;
 
+import com.eventboard.config.ApplicationContext;
 import com.eventboard.dto.CreateEventRequest;
 import com.eventboard.dto.EventListItemDto;
 import com.eventboard.exception.ValidationException;
-import com.eventboard.repository.EventRepository;
-import com.eventboard.repository.ParticipantRepository;
-import com.eventboard.repository.jdbc.JdbcEventRepository;
-import com.eventboard.repository.jdbc.JdbcParticipantRepository;
-import com.eventboard.service.EventServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -26,9 +22,7 @@ public class EventsServlet extends HttpServlet {
 
     @Override
     public void init() {
-        EventRepository eventRepository = new JdbcEventRepository();
-        ParticipantRepository participantRepository = new JdbcParticipantRepository();
-        eventService = new EventServiceImpl(eventRepository, participantRepository);
+        eventService = ApplicationContext.getEventService();
     }
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {

@@ -81,6 +81,15 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(request.getEventId())
                 .orElseThrow(() -> new EventNotFoundException("Захід не знайдено"));
 
+        boolean alreadyRegistered = participantRepository.existsByEventIdAndEmail(
+                event.getId(),
+                request.getStudentEmail()
+        );
+
+        if (alreadyRegistered) {
+            throw new ValidationException("Студент з таким email уже зареєстрований на цей захід");
+        }
+
         int registeredCount = participantRepository.countByEventId(event.getId());
 
         if (registeredCount >= event.getMaxSeats()) {
@@ -103,6 +112,9 @@ public class EventServiceImpl implements EventService {
         }
         if (request.getEventDate().isBefore(LocalDate.now())) {
             throw new ValidationException("Event date is before current date");
+        }
+        if (request.getEventDate().isAfter(LocalDate.now().plusYears(1))) {
+            throw new ValidationException("Дата заходу не може бути більше ніж через 1 рік");
         }
         if (request.getMaxSeats() <= 0) {
             throw new ValidationException("Кількість місць має бути більшою за нуль");

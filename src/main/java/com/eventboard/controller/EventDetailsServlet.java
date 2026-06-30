@@ -1,19 +1,16 @@
 package com.eventboard.controller;
 
+import com.eventboard.config.ApplicationContext;
 import com.eventboard.dto.EventDetailsDto;
+import com.eventboard.dto.RegisterParticipantRequest;
 import com.eventboard.exception.EventNotFoundException;
-import com.eventboard.repository.EventRepository;
-import com.eventboard.repository.ParticipantRepository;
-import com.eventboard.repository.jdbc.JdbcEventRepository;
-import com.eventboard.repository.jdbc.JdbcParticipantRepository;
+import com.eventboard.exception.ValidationException;
 import com.eventboard.service.EventService;
-import com.eventboard.service.EventServiceImpl;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-
 
 import java.io.IOException;
 
@@ -23,10 +20,9 @@ public class EventDetailsServlet extends HttpServlet {
 
     @Override
     public void init() {
-        EventRepository eventRepository = new JdbcEventRepository();
-        ParticipantRepository participantRepository = new JdbcParticipantRepository();
-        eventService = new EventServiceImpl(eventRepository, participantRepository);
+        eventService = ApplicationContext.getEventService();
     }
+
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String idValue = request.getParameter("id");
@@ -42,7 +38,39 @@ public class EventDetailsServlet extends HttpServlet {
                     .forward(request, response);
         } catch (NumberFormatException e) {
             response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID заходу має бути числом");
-        } catch (EventNotFoundException e){
+        } catch (EventNotFoundException e) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND, e.getMessage());
+        }
+    }
+
+    @Override
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        request.setCharacterEncoding("UTF-8");
+
+        String idValue = request.getParameter("id");
+        if (idValue == null || idValue.isBlank()) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID заходу є обов'язковим");
+            return;
+        }
+        try {
+            Long eventId = Long.parseLong(idValue);
+
+            String studentName = request.getParameter("studentName");
+            String studentEmail = request.getParameter("studentEmail");
+
+            RegisterParticipantRequest registerRequest =
+                    new RegisterParticipantRequest(eventId, studentName, studentEmail);
+
+            eventService.registerParticipant(registerRequest);
+
+            response.sendRedirect(request.getContextPath() + "/event?id=" + eventId);
+
+        } catch (NumberFormatException e) {
+            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "ID заходу має бути числом");
+        } catch (ValidationException e) {
+            request.setAttribute("error", e.getMessage());
+            doGet(request, response);
+        } catch (EventNotFoundException e) {
             response.sendError(HttpServletResponse.SC_NOT_FOUND, e.getMessage());
         }
     }

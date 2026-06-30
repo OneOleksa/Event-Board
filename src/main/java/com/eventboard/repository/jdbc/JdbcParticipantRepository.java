@@ -31,6 +31,15 @@ public class JdbcParticipantRepository implements ParticipantRepository {
         VALUES (?, ?, ?)
         """;
 
+    private static final String EXISTS_BY_EVENT_ID_AND_EMAIL_SQL = """
+        SELECT EXISTS (
+            SELECT 1
+            FROM participants
+            WHERE event_id = ?
+              AND LOWER(student_email) = LOWER(?)
+        )
+        """;
+
     @Override
     public int countByEventId(Long eventId) {
         Objects.requireNonNull(eventId, "Event id cannot be null");
@@ -81,6 +90,29 @@ public class JdbcParticipantRepository implements ParticipantRepository {
         }catch (SQLException e) {
             throw new RuntimeException("Cannot save participant", e);
         }
+    }
+
+    @Override
+    public boolean existsByEventIdAndEmail(Long eventId, String studentEmail) {
+        Objects.requireNonNull(eventId, "Event id cannot be null");
+        Objects.requireNonNull(studentEmail, "Student email cannot be null");
+
+        try (Connection connection = DatabaseConnectionFactory.getConnection();
+             PreparedStatement preparedStatement =
+                     connection.prepareStatement(EXISTS_BY_EVENT_ID_AND_EMAIL_SQL)) {
+            preparedStatement.setLong(1, eventId);
+            preparedStatement.setString(2, studentEmail.trim());
+
+            try (ResultSet resultSet = preparedStatement.executeQuery()) {
+                if (resultSet.next()) {
+                    return resultSet.getBoolean(1);
+                }
+            }
+
+        } catch (SQLException e) {
+            throw new RuntimeException("Cannot check participant email", e);
+        }
+        return false;
     }
 
     private Participant mapRowToParticipant(ResultSet resultSet) throws SQLException {

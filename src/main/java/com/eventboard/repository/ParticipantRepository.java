@@ -9,4 +9,5 @@ public interface ParticipantRepository {
     int countByEventId(Long eventId);
     List<Participant> findByEventId(Long eventId);
     void save(Participant participant);
+    boolean existsByEventIdAndEmail(Long eventId, String studentEmail);
 }
