@@ -13,9 +13,14 @@ import com.eventboard.model.Event;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+/**
+ * Default implementation of {@link EventService}.
+ * Handles validation rules and delegates persistence to repositories.
+ */
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
@@ -32,12 +37,26 @@ public class EventServiceImpl implements EventService {
         this.participantRepository = Objects.requireNonNull(participantRepository, "ParticipantRepository cannot be null");
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<EventListItemDto> getUpcomingEvents() {
         List<Event> events = eventRepository.findUpcomingEvents();
+
+        if (events.isEmpty()) {
+            return List.of();
+        }
+
+        List<Long> eventIds = events.stream()
+                .map(Event::getId)
+                .toList();
+
+        Map<Long, Integer> registeredCounts = participantRepository.countByEventIds(eventIds);
+
         return events.stream()
                 .map(event -> {
-                    int registeredCount = participantRepository.countByEventId(event.getId());
+                    int registeredCount = registeredCounts.getOrDefault(event.getId(), 0);
 
                     return new EventListItemDto(
                             event.getId(),
@@ -50,17 +69,23 @@ public class EventServiceImpl implements EventService {
                 .toList();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void createEvent(CreateEventRequest request) {
         Objects.requireNonNull(request, "CreateEventRequest cannot be null");
         validateCreateEventRequest(request);
         Event event = new Event();
-        event.setTitle(request.getTitle());
+        event.setTitle(request.getTitle().trim());
         event.setEventDate(request.getEventDate());
         event.setMaxSeats(request.getMaxSeats());
         eventRepository.save(event);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public EventDetailsDto getEventDetails(Long eventId) {
         Objects.requireNonNull(eventId, "Event id cannot be null");
@@ -72,6 +97,9 @@ public class EventServiceImpl implements EventService {
         return new EventDetailsDto(event, participants);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void registerParticipant(RegisterParticipantRequest request) {
         Objects.requireNonNull(request, "RegisterParticipantRequest cannot be null");
@@ -83,24 +111,23 @@ public class EventServiceImpl implements EventService {
 
         boolean alreadyRegistered = participantRepository.existsByEventIdAndEmail(
                 event.getId(),
-                request.getStudentEmail()
+                request.getStudentEmail().trim()
         );
 
         if (alreadyRegistered) {
             throw new ValidationException("Студент з таким email уже зареєстрований на цей захід");
         }
 
-        int registeredCount = participantRepository.countByEventId(event.getId());
-
-        if (registeredCount >= event.getMaxSeats()) {
-            throw new ValidationException("На цей захід більше немає вільних місць");
-        }
         Participant participant = new Participant();
         participant.setEventId(event.getId());
         participant.setStudentName(request.getStudentName().trim());
         participant.setStudentEmail(request.getStudentEmail().trim());
 
-        participantRepository.save(participant);
+        boolean saved = participantRepository.saveIfFreeSeats(participant, event.getMaxSeats());
+
+        if (!saved) {
+            throw new ValidationException("На цей захід більше немає вільних місць");
+        }
     }
 
     private void validateCreateEventRequest(CreateEventRequest request) {
@@ -111,7 +138,7 @@ public class EventServiceImpl implements EventService {
             throw new ValidationException("Дата заходу є обов'язковою");
         }
         if (request.getEventDate().isBefore(LocalDate.now())) {
-            throw new ValidationException("Event date is before current date");
+            throw new ValidationException("Дата заходу не може бути в минулому");
         }
         if (request.getEventDate().isAfter(LocalDate.now().plusYears(1))) {
             throw new ValidationException("Дата заходу не може бути більше ніж через 1 рік");

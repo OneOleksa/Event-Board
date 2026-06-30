@@ -7,8 +7,9 @@ import lombok.ToString;
 import lombok.Getter;
 import lombok.Builder;
 
-import java.time.LocalDate;
-
+/**
+ * Represents a student registration for a specific event.
+ */
 @Getter
 @Setter
 @ToString

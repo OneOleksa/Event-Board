@@ -14,15 +14,24 @@ import jakarta.servlet.http.HttpServletResponse;
 
 import java.io.IOException;
 
+/**
+ * Controller for one event details page and participant registration.
+ */
 @WebServlet("/event")
 public class EventDetailsServlet extends HttpServlet {
     private EventService eventService;
 
+    /**
+     * Initializes manually wired service dependencies.
+     */
     @Override
     public void init() {
         eventService = ApplicationContext.getEventService();
     }
 
+    /**
+     * Handles GET /event?id=... and forwards event details to the JSP.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         String idValue = request.getParameter("id");
@@ -43,6 +52,9 @@ public class EventDetailsServlet extends HttpServlet {
         }
     }
 
+    /**
+     * Handles POST /event?id=... and applies PRG after successful registration.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");

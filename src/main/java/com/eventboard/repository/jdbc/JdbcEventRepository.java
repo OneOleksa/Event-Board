@@ -13,7 +13,9 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 
-
+/**
+ * JDBC implementation of {@link EventRepository}.
+ */
 public class JdbcEventRepository implements EventRepository {
     private static final String FIND_UPCOMING_EVENTS_SQL = """
         SELECT id, title, event_date, max_seats
@@ -33,9 +35,11 @@ public class JdbcEventRepository implements EventRepository {
         WHERE id = ?
         """;
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public List<Event> findUpcomingEvents() {
-
         List<Event> events = new ArrayList<>();
         try (Connection connection = DatabaseConnectionFactory.getConnection();
              PreparedStatement preparedStatement = connection.prepareStatement(FIND_UPCOMING_EVENTS_SQL);
@@ -43,12 +47,15 @@ public class JdbcEventRepository implements EventRepository {
             while (resultSet.next()) {
                 events.add(mapRowToEvent(resultSet));
             }
-        } catch (SQLException e){
+        } catch (SQLException e) {
             throw new RuntimeException("Cannot find upcoming events", e);
         }
-       return events;
+        return events;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public void save(Event event) {
         Objects.requireNonNull(event, "Event cannot be null");
@@ -64,6 +71,9 @@ public class JdbcEventRepository implements EventRepository {
         }
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public Optional<Event> findById(Long id) {
         Objects.requireNonNull(id, "Event id cannot be null");
@@ -84,6 +94,7 @@ public class JdbcEventRepository implements EventRepository {
 
         return Optional.empty();
     }
+
     private Event mapRowToEvent(ResultSet resultSet) throws SQLException {
         Event event = new Event();
 

@@ -5,6 +5,9 @@ import lombok.Getter;
 
 import java.time.LocalDate;
 
+/**
+ * Carries form data required to create a new event.
+ */
 @Getter
 @AllArgsConstructor
 public class CreateEventRequest {

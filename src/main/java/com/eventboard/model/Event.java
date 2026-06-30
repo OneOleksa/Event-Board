@@ -9,6 +9,9 @@ import lombok.ToString;
 
 import java.time.LocalDate;
 
+/**
+ * Represents an event that students can register for.
+ */
 @Getter
 @Setter
 @NoArgsConstructor

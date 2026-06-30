@@ -7,6 +7,9 @@ import com.eventboard.repository.jdbc.JdbcParticipantRepository;
 import com.eventboard.service.EventService;
 import com.eventboard.service.EventServiceImpl;
 
+/**
+ * Simple manual dependency container for the application.
+ */
 public class ApplicationContext {
 
     private static final EventRepository EVENT_REPOSITORY =
@@ -21,6 +24,11 @@ public class ApplicationContext {
     private ApplicationContext() {
     }
 
+    /**
+     * Provides the shared event service instance used by servlets.
+     *
+     * @return configured event service
+     */
     public static EventService getEventService() {
         return EVENT_SERVICE;
     }

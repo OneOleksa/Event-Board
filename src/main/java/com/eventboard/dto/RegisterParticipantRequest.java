@@ -3,6 +3,9 @@ package com.eventboard.dto;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 
+/**
+ * Carries form data required to register a participant for an event.
+ */
 @Getter
 @AllArgsConstructor
 public class RegisterParticipantRequest {

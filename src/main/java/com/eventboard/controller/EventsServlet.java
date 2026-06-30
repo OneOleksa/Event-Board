@@ -16,14 +16,25 @@ import java.time.format.DateTimeParseException;
 import java.time.LocalDate;
 import java.util.List;
 
+/**
+ * Controller for the main events page.
+ * Handles listing upcoming events and creating new events.
+ */
 @WebServlet("/events")
 public class EventsServlet extends HttpServlet {
     private EventService eventService;
 
+    /**
+     * Initializes manually wired service dependencies.
+     */
     @Override
     public void init() {
         eventService = ApplicationContext.getEventService();
     }
+
+    /**
+     * Handles GET /events and forwards data to the events JSP.
+     */
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         response.setContentType("text/html;charset=UTF-8");
@@ -31,6 +42,10 @@ public class EventsServlet extends HttpServlet {
         request.setAttribute("events", events);
         request.getRequestDispatcher("/WEB-INF/views/events.jsp").forward(request, response);
     }
+
+    /**
+     * Handles POST /events and applies PRG after successful event creation.
+     */
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         request.setCharacterEncoding("UTF-8");

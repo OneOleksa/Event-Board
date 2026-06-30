@@ -8,6 +8,9 @@ import java.sql.SQLException;
 import java.util.Properties;
 
 
+/**
+ * Creates JDBC connections using settings from application.properties.
+ */
 public class DatabaseConnectionFactory {
     private static final String DB_URL;
     private static final String DB_USERNAME;
@@ -38,6 +41,12 @@ public class DatabaseConnectionFactory {
     private DatabaseConnectionFactory() {
     }
 
+    /**
+     * Opens a new database connection.
+     *
+     * @return new JDBC connection
+     * @throws SQLException when the database connection cannot be opened
+     */
     public static Connection getConnection() throws SQLException {
         return DriverManager.getConnection(DB_URL, DB_USERNAME, DB_PASSWORD);
     }
