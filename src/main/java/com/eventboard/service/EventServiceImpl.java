@@ -3,6 +3,7 @@ package com.eventboard.service;
 import com.eventboard.dto.CreateEventRequest;
 import com.eventboard.dto.EventDetailsDto;
 import com.eventboard.dto.EventListItemDto;
+import com.eventboard.dto.RegisterParticipantRequest;
 import com.eventboard.exception.EventNotFoundException;
 import com.eventboard.exception.ValidationException;
 import com.eventboard.model.Participant;
@@ -13,11 +14,17 @@ import com.eventboard.model.Event;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
     private final ParticipantRepository participantRepository;
+    private static final Pattern EMAIL_PATTERN =
+            Pattern.compile(
+                    "^[A-Za-z0-9._%+-]+@(stud\\.duikt\\.edu\\.ua|gmail\\.com|hotmail\\.com|outlook\\.com)$",
+                    Pattern.CASE_INSENSITIVE
+            );
 
     public EventServiceImpl(EventRepository eventRepository,
                             ParticipantRepository participantRepository) {
@@ -65,6 +72,28 @@ public class EventServiceImpl implements EventService {
         return new EventDetailsDto(event, participants);
     }
 
+    @Override
+    public void registerParticipant(RegisterParticipantRequest request) {
+        Objects.requireNonNull(request, "RegisterParticipantRequest cannot be null");
+
+        validateRegisterParticipantRequest(request);
+
+        Event event = eventRepository.findById(request.getEventId())
+                .orElseThrow(() -> new EventNotFoundException("Захід не знайдено"));
+
+        int registeredCount = participantRepository.countByEventId(event.getId());
+
+        if (registeredCount >= event.getMaxSeats()) {
+            throw new ValidationException("На цей захід більше немає вільних місць");
+        }
+        Participant participant = new Participant();
+        participant.setEventId(event.getId());
+        participant.setStudentName(request.getStudentName().trim());
+        participant.setStudentEmail(request.getStudentEmail().trim());
+
+        participantRepository.save(participant);
+    }
+
     private void validateCreateEventRequest(CreateEventRequest request) {
         if (request.getTitle() == null || request.getTitle().isBlank()) {
             throw new ValidationException("Назва заходу не може бути порожньою");
@@ -77,6 +106,20 @@ public class EventServiceImpl implements EventService {
         }
         if (request.getMaxSeats() <= 0) {
             throw new ValidationException("Кількість місць має бути більшою за нуль");
+        }
+    }
+    private void validateRegisterParticipantRequest(RegisterParticipantRequest request) {
+        if (request.getEventId() == null) {
+            throw new ValidationException("ID заходу є обов'язковим");
+        }
+        if (request.getStudentName() == null || request.getStudentName().isBlank()) {
+            throw new ValidationException("Ім'я студента не може бути порожнім");
+        }
+        if (request.getStudentEmail() == null || request.getStudentEmail().isBlank()) {
+            throw new ValidationException("Email студента є обов'язковим");
+        }
+        if (!EMAIL_PATTERN.matcher(request.getStudentEmail().trim()).matches()) {
+            throw new ValidationException("Email має бути у дозволеному форматі: stud.duikt.edu.ua, gmail.com, hotmail.com або outlook.com");
         }
     }
 }

@@ -26,6 +26,11 @@ public class JdbcParticipantRepository implements ParticipantRepository {
         ORDER BY id
         """;
 
+    private static final String SAVE_PARTICIPANT_SQL = """
+        INSERT INTO participants (event_id, student_name, student_email)
+        VALUES (?, ?, ?)
+        """;
+
     @Override
     public int countByEventId(Long eventId) {
         Objects.requireNonNull(eventId, "Event id cannot be null");
@@ -63,6 +68,21 @@ public class JdbcParticipantRepository implements ParticipantRepository {
         }
         return participants;
     }
+
+    @Override
+    public void save(Participant participant) {
+        Objects.requireNonNull(participant, "Participant cannot be null");
+        try (Connection connection = DatabaseConnectionFactory.getConnection();
+             PreparedStatement preparedStatement = connection.prepareStatement(SAVE_PARTICIPANT_SQL)) {
+            preparedStatement.setLong(1, participant.getEventId());
+            preparedStatement.setString(2, participant.getStudentName());
+            preparedStatement.setString(3, participant.getStudentEmail());
+            preparedStatement.executeUpdate();
+        }catch (SQLException e) {
+            throw new RuntimeException("Cannot save participant", e);
+        }
+    }
+
     private Participant mapRowToParticipant(ResultSet resultSet) throws SQLException {
         Participant participant = new Participant();
         participant.setId(resultSet.getLong("id"));
